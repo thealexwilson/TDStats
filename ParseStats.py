@@ -4,6 +4,7 @@ import csv
 from types import SimpleNamespace
 import jsonpickle
 import os
+import ParseQL
 
 #sampleurl - "args": ["https://qlstats.net/game/7495401.json"]
 GAMEURL = "https://qlstats.net/game/7650424"
@@ -251,7 +252,7 @@ def parseStats( gameURL ):
     with urllib.request.urlopen(gameURL) as url:
         data = json.loads(url.read().decode())
         print(data)
-        parseGameStats(data)
+        parseGameStats(data, gameURL)
 
     DumpPlayers()
 
@@ -305,10 +306,14 @@ def getPlayerNameFromQLStats( playerID ):
     print("Retrieved Player from QL Stats: ID - " + str(playerID) + " Name - " + playerName )
     return playerName
 
-def parseGameStats( data ):
+def parseGameStats( data, gameURL:str ):
     mapName = data['map']['name']
     mapDate = data['game']['start']
     map = Map(mapName, mapDate)
+
+    # TODO - Parse the QL page and load it into a dictionary
+    QLPlayers = {}
+    QLPlayers = ParseQL.ParseQLPage(gameURL.rstrip(".json"))
 
     for item in data['pgstats']:
         playerName = getPlayerName(item['player_id'])
@@ -322,6 +327,12 @@ def parseGameStats( data ):
         for weapon in data['pwstats'][item]['weapons']:
             weaponDMG = data['pwstats'][item]['weapons'][weapon]
             player.addWeapDamage( weapon, weaponDMG[1], weaponDMG[0], weaponDMG[3], weaponDMG[2])
+
+        #TODO - Get player KD
+        kills = 0
+        deaths = 0
+        (kills, deaths) = ParseQL.GetKD(QLPlayers, item)
+        player.addKD( kills, deaths)
 
     map.Teams[0].addMissingPlayers()
     map.Teams[1].addMissingPlayers()
@@ -386,7 +397,7 @@ def printTeamPlayers( teamPlayers ):
 
 
 def outputCSV( map ):
-    folderName = map.Teams[0].Name[:5] + " v " + map.Teams[1].Name[:5]
+    folderName = "TD6 Stats/" + map.Teams[0].Name[:5] + " v " + map.Teams[1].Name[:5]
     os.makedirs( folderName, exist_ok = True )
     outfileName = folderName + "/" + map.Date + " - " + map.Name + ".csv"
     with open(outfileName, 'w') as outfile:
