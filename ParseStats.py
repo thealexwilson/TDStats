@@ -397,7 +397,7 @@ def printTeamPlayers( teamPlayers ):
 
 
 def outputCSV( map ):
-    folderName = "TD6 Stats/" + map.Teams[0].Name[:5] + " v " + map.Teams[1].Name[:5]
+    folderName = "Stats/" + map.Teams[0].Name[:5] + " v " + map.Teams[1].Name[:5]
     os.makedirs( folderName, exist_ok = True )
     outfileName = folderName + "/" + map.Date + " - " + map.Name + ".csv"
     with open(outfileName, 'w') as outfile:

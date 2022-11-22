@@ -5,6 +5,22 @@ from bs4 import BeautifulSoup
 
 def ParseAndAddPlayers(players: dict, teamname: str, soup: BeautifulSoup):
     results = soup.find_all("tr", class_=teamname)
+    print("soup:")
+    print(soup)
+    print("results:")
+    print(results)
+    header_list = "nick", "time", "kills", "deaths", "score"
+    # headers = soup.find_all("tr")
+    # header for header in headers if header.text in header_list:
+    ths = soup.find_all("th")
+    print("ths:")
+    print(ths)
+    th_map = {}
+    for th in ths:
+        print("th:")
+        print(th)
+        if th.text in header_list:
+            th_map[th.text] = th.text
     for tr in results:
         tds = tr.find_all("td")
         if (len (tds) > 5 ):
@@ -33,7 +49,13 @@ def GetKD(players: dict, steamID: str):
     if steamID in players.keys():
         kills = players[steamID]["kills"]
         deaths = players[steamID]["deaths"]
-
+    # TODO: Remove this
+    # print("players:")
+    # print(players)
+    # print("kills")
+    # print(kills)
+    # print("deaths")
+    # print(deaths)
     return (kills, deaths)
 
 
