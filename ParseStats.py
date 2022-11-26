@@ -148,10 +148,16 @@ class Player():
     def addKD( self, kills, deaths ):
         self.Kills = kills
         self.Deaths = deaths
+    
+    def addKDR( self, kills, deaths ):
+        self.KDR = str(int(kills) - int(deaths))
        
     def addDamage( self, dealt, received ):
         self.DamageDealt = dealt
         self.DamageReceived = received
+
+    def addNetDamage( self, dealt, received ):
+        self.NetDamage = str(int(dealt) - int(received))
 
     def addWeapDamage( self, weap, damage, kills, shots, hits ):
         damage = WeapDamage( damage, kills, shots, hits )
@@ -169,6 +175,8 @@ class Player():
             self.LGStats = damage
         elif weap == "hmg":
             self.HMGStats = damage
+        elif weap == "mg":
+            self.MGStats = damage
 
         # Player kills is sum of allkills
         if hasattr(self, "Kills") :
@@ -320,6 +328,7 @@ def parseGameStats( data, gameURL:str ):
         player = Player(item['player_id'], playerName )
         teamID = item['team'] - 1
         player.addDamage( item['pushes'], item['destroys'] )
+        player.addNetDamage( item['pushes'], item['destroys'] )
         map.addPlayer( teamID, player )
 
     for item in data['pwstats']:
@@ -333,10 +342,11 @@ def parseGameStats( data, gameURL:str ):
         deaths = 0
         (kills, deaths) = ParseQL.GetKD(QLPlayers, item)
         player.addKD( kills, deaths)
+        player.addKDR( kills, deaths )
 
     map.Teams[0].addMissingPlayers()
     map.Teams[1].addMissingPlayers()
-
+    
     printAllPlayers( map )
     outputCSV(map)
 
@@ -395,6 +405,11 @@ def printTeamPlayers( teamPlayers ):
             weapStat = player.PGStats
             print(" \t " + str(weapStat.Damage) + "\t" + str(weapStat.Shots) + "\t" + str(weapStat.Hits))
 
+        if ( hasattr(player, 'MGStats') ) :
+            print( "  ----- MG Stats: " )
+            weapStat = player.MGStats
+            print(" \t " + str(weapStat.Damage) + "\t" + str(weapStat.Shots) + "\t" + str(weapStat.Hits))
+
 
 def outputCSV( map ):
     folderName = "Stats/" + map.Teams[0].Name[:5] + " v " + map.Teams[1].Name[:5]
@@ -402,20 +417,19 @@ def outputCSV( map ):
     outfileName = folderName + "/" + map.Date + " - " + map.Name + ".csv"
     with open(outfileName, 'w') as outfile:
         writeHeader2( outfile )
-
         writePlayerStats( map, outfile )
 
     return
 
 def writeHeader( outFile ):
-    header = ["Team Name", "Player Name", "Kills", "Deaths", "Damage Dealt", "Damage Taken", "SG Hits", "SG Shots", "GL Hits", "GL Shots",
+    header = ["Team Name", "Player Name", "Kills", "Deaths", "KDR", "Damage Dealt", "Damage Taken", "Net Damage", "MG Hits", "MG Shots", "MG acc", "SG Hits", "SG Shots", "GL Hits", "GL Shots",
                "RL Hits", "RL Shots", "LG Hits", "LG Shots","RG Hits", "RG Shots", "HMG Hits", "HMG Shots", "PG Hits", "PG Shots"]
     outFile.write( ','.join(header))
     outFile.write("\n")
     return
 
 def writeHeader2( outFile ):
-    header = ["Team Name", "Player Name", "Kills", "Deaths", "Damage Dealt", "Damage Taken", "SG Hits", "SG Shots", "SG acc", "GL Hits", "GL Shots",
+    header = ["Team Name", "Player Name", "Kills", "Deaths", "KDR", "Damage Dealt", "Damage Taken", "Net Damage", "MG Hits", "MG Shots", "MG acc", "SG Hits", "SG Shots", "SG acc", "GL Hits", "GL Shots",
               "GL Acc", "RL Hits", "RL Shots", "RL Acc", "LG Hits", "LG Shots", "LG Acc", "RG Hits", "RG Shots", "RG Acc",  "HMG Hits", "HMG Shots"
               , "HMG Acc", "PG Hits", "PG Shots", "PG Acc"]
     outFile.write( ','.join(header))
@@ -436,8 +450,11 @@ def writeTeamStats( teamName, players, outFile ):
 
         line = line + addAttr( player, 'Kills')
         line = line + addAttr( player, 'Deaths')
+        line = line + addAttr( player, 'KDR')
         line = line + addAttr( player, 'DamageDealt')
         line = line + addAttr( player, 'DamageReceived')
+        line = line + addAttr( player, 'NetDamage')
+        line = line + addWeap2( player, 'MGStats')
         line = line + addWeap2( player, 'SGStats')
         line = line + addWeap2( player, 'GLStats')
         line = line + addWeap2( player, 'RLStats')
