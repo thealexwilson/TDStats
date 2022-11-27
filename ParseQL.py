@@ -10,7 +10,9 @@ def ParseAndAddPlayers(players: dict, teamname: str, soup: BeautifulSoup):
         tds = tr.find_all("td")
         if (len (tds) > 5 ):
             player = {}
-            steamID = tds[0].contents[1].attrs["href"].split("/")[2]
+            steamID = 0
+            if ('href' in tds[0].contents[1].attrs):
+                steamID = tds[0].contents[1].attrs["href"].split("/")[2]
             player["name"] = f"{tds[0].text}".strip()
             player["kills"] = f"{tds[2].text}"
             player["deaths"] = f"{tds[3].text}"
