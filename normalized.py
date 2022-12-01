@@ -1,85 +1,119 @@
+from collections import defaultdict
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+# import fetch_google_sheet_data
+# dfs = fetch_google_sheet_data.main()
+import pandas_stats_data
 
-dfs =pd.read_excel("Lamp's Make 2v2 Great Again Stats.xlsx",sheet_name=list(range(3, 15)))
-from collections import defaultdict
 
+match_list = pandas_stats_data.main()
 matches = defaultdict(dict)
 
-for k, df in dfs.items():
-    print("dfs: ")
-    print(dfs)
+for match in match_list:
+    map_name = match["map"]
+    df = match["df"]
+    team1 = match["teams"][0]
+    team2 = match["teams"][1]
 
-    if k == 'Rankings':
-        pass
-    opponent = ''
     for row in df.itertuples():
-        rv = row[1]
-        blank = type(rv) == float and np.isnan(rv)
-        if rv == 'Map':
-            dfn = df.iloc[row[0]+2:row[0]+6,:7].copy()
-            dfn.columns = list(df.iloc[row[0]+1,:7])
-            map_name = row[2]
-            kval = tuple(sorted([k,opponent]) + [map_name])
-            matches[kval][k] = dfn
-            print('\t',map_name)
-        if rv == 'Match':
-            opponent = row[2].split()[-1]
-            if opponent == 'mode?':
-                opponent = 'Mode'
-            if opponent == 'X-Rated':
-                opponent = 'XRated'
-            print(k, opponent)
+        team1_rows = df.loc[df['Team Name'] == team1]
+        new_df = team1_rows.copy()
+        new_df = new_df.append(df.loc[df['Team Name'] == team2])
+        columns = df.columns[:8]
+        new_df = new_df[columns]
+        # print("new_df: ")
+        # print(new_df)
+
+        kval = tuple(sorted(match['teams']) + [map_name])
+        matches[kval][team1] = new_df
+        print("matches: ")
+        print('\t',matches)
     print()
-maps = defaultdict(list)
-for k,v in matches.items():
-    ting = [v2.mean(0) for k2,v2 in v.items()]
-    maps[k[-1]].append(ting)
-cols = list(maps[list(maps.keys())[0]][0][0].keys())
-df_maps = pd.DataFrame({k:np.mean(sum(v,[]),axis=0) for k,v in maps.items()}).T
-df_maps.columns = cols
-df_maps.sort_values('Damage Given')
-{k: list(v.keys()) for k,v in matches.items() if len(v.keys()) == 1}
-aliases = {
-    'm:(es':'miles',
-    'miles of shit':'miles',
-    'fuckin miles':'miles',
-    't41TG':'t41TG',
-    'ᵠᶠᴸt41TG':'t41TG',
-    'miles morales SPIDERMAN':'miles',
-    'davE':'icel0re',
-    '1999 icel0re':'icel0re',
-    'konz':'konfuzed',
-    'a1 sotrix':'sotrix',
-    'zog':'zig',
-    'imaloser':'sotrix',
-    'Raul':'raul',
-}
-tot_tables = {k: pd.concat(v.values()).set_index('Player') for k,v in matches.items()}
-for k,v in tot_tables.items():
-    v.index = pd.Index([aliases.get(_,_) for _ in v.index],name='Player')
-nrm_tables = {k:v/v.mean(0) for k,v in tot_tables.items()}
 
-for k,v in nrm_tables.items():
-    v['map'] = k[2]
-    v['team1'] = k[1]
-    v['team2'] = k[0]
-v = nrm_tables[('Mode',  'SavageZ',  'dredwerkz')]
-dft = pd.concat(nrm_tables.values()).sort_values('Damage Given',0,False).drop(['Net F/D','Net Damage'],1)
+    maps = defaultdict(list)
+    for k, v in matches.items():
+        ting = [v2.mean(0) for k2, v2 in v.items()]
+        maps[k[-1]].append(ting)
+    cols = list(maps[list(maps.keys())[0]][0][0].keys())
+    df_maps = pd.DataFrame({ k:np.mean(sum(v, []), axis = 0) for k, v in maps.items() }).T
+    df_maps.columns = cols
+    df_maps.sort_values('Damage Dealt')
+    { k: list(v.keys()) for k, v in matches.items() if len(v.keys()) == 1 }
+    
+    # TODO: Remove this - we already doing this
+    # Just need to make sure we capitalized all the names in the output
+    # aliases = {
+    #     'm:(es':'miles',
+    #     'miles of shit':'miles',
+    #     'fuckin miles':'miles',
+    #     't41TG':'t41TG',
+    #     'ᵠᶠᴸt41TG':'t41TG',
+    #     'miles morales SPIDERMAN':'miles',
+    #     'davE':'icel0re',
+    #     '1999 icel0re':'icel0re',
+    #     'konz':'konfuzed',
+    #     'a1 sotrix':'sotrix',
+    #     'zog':'zig',
+    #     'imaloser':'sotrix',
+    #     'Raul':'raul',
+    # }
+    aliases = {
+        "vig1lante": 'VIG1LANTE',
+        "zɥdoɹԀ": 'ZHPORP',
+        "hotmessexpress": 'HOTMESSEXPRESS',
+        "Warden": 'WARDEN',
+        "XZIST": 'XZIST',
+        "ziGGeh": 'ZIGGEH',
+        "Rey": 'REY',
+        "thundeR": 'THUNDER',
+        "adz1LaAa": 'ADZ1LAAA',
+        "Moody": 'MOODY',
+        "zombie": 'ZOMBIE',
+        "sotrix": 'SOTRIX',
+        "aW.phalaer": 'AW.PHALAER',
+        "butcher": 'BUTCHER',
+        "ouija": 'OUIJA',
+        "MILFMAGNET69": 'MILFMAGNET69',
+        "Joe": 'JOE',
+        "torrin": 'TORRIN',
+        "aW.dakinaw": 'AW.DAKINAW',
+        "Lampyre": 'LAMPYRE',
+        "vibration": 'VIBRATION',
+        "machine": 'MACHINE',
+        "]69[MzHero♡": 'MZHEROINE',
+        "C@NIP": 'C@NIP'
+    }
+    tot_tables = { k: pd.concat(v.values()).set_index('Player Name') for k, v in matches.items() }
+    for k, v in tot_tables.items():
+        v.index = pd.Index([aliases.get(_,_) for _ in v.index],name='Player Name')
 
-dft['NormNet Damage'] = dft['Damage Given']-dft['Damage Taken']
-dft['Norm(FmD)'] = dft['Frags']-dft['Deaths']
-dft['sNetE'] = dft['Frags'] + ( dft['Damage Given']/ 181.2 ) + ( dft['Deaths'] / -3.5 ) + ( dft['Damage Taken'] / -275.1 )
-dft['sNetE'] = dft['Frags'] + ( dft['Damage Given'] ) + ( dft['Deaths'] / -3.5 ) + ( dft['Damage Taken'] / -1.5 )
-dft = dft.sort_values('sNetE',0,False)
-dft.to_csv('xzist_out2.csv')
-dft
-df_ci = dft.drop(['map','team1','team2'],1).groupby('Player')
-df_ci = 1.96*df_ci.std()/np.sqrt(df_ci.count())
-dft2 = dft.groupby('Player').mean().sort_values('sNetE',0,False)
-dft2['lb_snet'] = dft2['sNetE'] - df_ci['sNetE']
-dft2['ub_snet'] = dft2['sNetE'] + df_ci['sNetE']
-dft2.to_csv('xzist_out.csv')
-dft2
-df_ci.std()
+    nrm_tables = { k:v/v.mean(0) for k, v in tot_tables.items() }
+    # print("nrm_tables: ")
+    # print(nrm_tables)
+
+    for k, v in nrm_tables.items():
+        v['map'] = k[2]
+        v['team1'] = k[1]
+        v['team2'] = k[0]
+    # print("nrm_tables: ")
+    # print(nrm_tables)
+    # v = nrm_tables[('Mode',  'SavageZ',  'dredwerkz')]
+    dft = pd.concat(nrm_tables.values()).sort_values('Damage Dealt', 0, False).drop(['KDR', 'Net Damage'], 1)
+    # dft = pd.concat(nrm_tables.values()).sort_values('Damage Dealt', 0, False).drop(['KDR'], 1)
+
+    dft['NormNet Damage'] = dft['Damage Dealt']-dft['Damage Taken']
+    dft['Norm(FmD)'] = dft['Kills']-dft['Deaths']
+    dft['sNetE'] = dft['Kills'] + ( dft['Damage Dealt']/ 181.2 ) + ( dft['Deaths'] / -3.5 ) + ( dft['Damage Taken'] / -275.1 )
+    dft['sNetE'] = dft['Kills'] + ( dft['Damage Dealt'] ) + ( dft['Deaths'] / -3.5 ) + ( dft['Damage Taken'] / -1.5 )
+    dft = dft.sort_values('sNetE',0,False)
+    dft.to_csv('xzist_out2.csv')
+    dft
+    df_ci = dft.drop(['map','team1','team2'],1).groupby('Player Name')
+    df_ci = 1.96*df_ci.std()/np.sqrt(df_ci.count())
+    dft2 = dft.groupby('Player Name').mean().sort_values('sNetE',0,False)
+    dft2['lb_snet'] = dft2['sNetE'] - df_ci['sNetE']
+    dft2['ub_snet'] = dft2['sNetE'] + df_ci['sNetE']
+    dft2.to_csv('xzist_out.csv')
+    dft2
+    df_ci.std()
